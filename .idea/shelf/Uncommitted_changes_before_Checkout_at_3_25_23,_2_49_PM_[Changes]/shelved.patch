@@ -1,0 +1,19 @@
+Index: .idea/dataSources.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"DataSourceManagerImpl\" format=\"xml\" multifile-model=\"true\">\n    <data-source source=\"LOCAL\" name=\"Library_Assignments\" uuid=\"a1478092-1aca-40b1-958c-35a4d3f86ecb\">\n      <driver-ref>mysql.8</driver-ref>\n      <synchronize>true</synchronize>\n      <remarks>Library_Assignments</remarks>\n      <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>\n      <jdbc-url>jdbc:mysql://34.230.35.214:3306</jdbc-url>\n      <working-dir>$ProjectFileDir$</working-dir>\n    </data-source>\n  </component>\n</project>
+===================================================================
+diff --git a/.idea/dataSources.xml b/.idea/dataSources.xml
+--- a/.idea/dataSources.xml	
++++ b/.idea/dataSources.xml	
+@@ -4,9 +4,8 @@
+     <data-source source="LOCAL" name="Library_Assignments" uuid="a1478092-1aca-40b1-958c-35a4d3f86ecb">
+       <driver-ref>mysql.8</driver-ref>
+       <synchronize>true</synchronize>
+-      <remarks>Library_Assignments</remarks>
+       <jdbc-driver>com.mysql.cj.jdbc.Driver</jdbc-driver>
+-      <jdbc-url>jdbc:mysql://34.230.35.214:3306</jdbc-url>
++      <jdbc-url>jdbc:mysql://34.230.35.214:3306/library2</jdbc-url>
+       <working-dir>$ProjectFileDir$</working-dir>
+     </data-source>
+   </component>

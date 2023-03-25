@@ -1,0 +1,164 @@
+Index: src/test/resources/features/us01.feature
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>Feature: As a data consumer, I want the user information are stored in mySql DB correctly in users table.\n  Background:\n    Given Establish the database connection\n\n  Scenario: verify users has unique IDs\n    When Execute query to get all IDs from users\n    Then verify all users has unique ID\n\n\n  Scenario: verify users table columns\n    When Execute query to get all columns\n    Then verify the below columns are listed in result\n\n      | id            |\n      | full_name     |\n      | email         |\n      | password      |\n      | user_group_id |\n      | image         |\n      | extra_data    |\n      | status        |\n      | is_admin      |\n      | start_date    |\n      | end_date      |\n      | address       |\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/test/resources/features/us01.feature b/src/test/resources/features/us01.feature
+--- a/src/test/resources/features/us01.feature	
++++ b/src/test/resources/features/us01.feature	
+@@ -2,6 +2,7 @@
+   Background:
+     Given Establish the database connection
+ 
++    @wip @db
+   Scenario: verify users has unique IDs
+     When Execute query to get all IDs from users
+     Then verify all users has unique ID
+Index: src/test/java/com/library/steps/Hooks.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.library.steps;\n\nimport com.library.utility.ConfigurationReader;\nimport com.library.utility.Driver;\nimport io.cucumber.java.After;\nimport io.cucumber.java.Before;\nimport io.cucumber.java.Scenario;\nimport org.openqa.selenium.OutputType;\nimport org.openqa.selenium.TakesScreenshot;\n\nimport java.util.concurrent.TimeUnit;\n\npublic class Hooks {\n\n    @Before\n    public void setUp(){\n        System.out.println(\"this is coming from BEFORE\");\n        Driver.getDriver().manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);\n        Driver.getDriver().manage().window().maximize();\n        Driver.getDriver().get(ConfigurationReader.getProperty(\"library_url\"));\n\n\n    }\n\n    @After\n    public void tearDown(Scenario scenario){\n        System.out.println(\"this is coming from AFTER\");\n\n        if(scenario.isFailed()){\n            final byte[] screenshot = ((TakesScreenshot) Driver.getDriver()).getScreenshotAs(OutputType.BYTES);\n            scenario.attach(screenshot,\"image/png\",\"screenshot\");\n        }\n\n        Driver.closeDriver();\n\n    }\n\n\n\n\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/test/java/com/library/steps/Hooks.java b/src/test/java/com/library/steps/Hooks.java
+--- a/src/test/java/com/library/steps/Hooks.java	
++++ b/src/test/java/com/library/steps/Hooks.java	
+@@ -1,6 +1,7 @@
+ package com.library.steps;
+ 
+ import com.library.utility.ConfigurationReader;
++import com.library.utility.DB_Util;
+ import com.library.utility.Driver;
+ import io.cucumber.java.After;
+ import io.cucumber.java.Before;
+@@ -12,7 +13,7 @@
+ 
+ public class Hooks {
+ 
+-    @Before
++    @Before("@ui")
+     public void setUp(){
+         System.out.println("this is coming from BEFORE");
+         Driver.getDriver().manage().timeouts().implicitlyWait(10, TimeUnit.SECONDS);
+@@ -35,6 +36,17 @@
+ 
+     }
+ 
++    @Before("@db")
++    public void setupDB(){
++        System.out.println("Connecting to database...");
++        DB_Util.createConnection();
++    }
++
++    @After("@db")
++    public void closeDB(){
++        System.out.println("Closing DB connection...");
++        DB_Util.destroy();
++    }
+ 
+ 
+ 
+Index: src/test/java/com/library/runner/CukesRunner.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.library.runner;\n\nimport io.cucumber.junit.Cucumber;\nimport io.cucumber.junit.CucumberOptions;\nimport org.junit.runner.RunWith;\n\n@RunWith(Cucumber.class)\n@CucumberOptions(\n\n        plugin = {\n                \"html:target/cucumber-report.html\",\n                \"rerun:target/rerun.txt\" ,\n                \"me.jvt.cucumber.report.PrettyReports:target/cucumber\"\n        },\n        features = \"src/test/resources/features\" ,\n        glue = \"com/library/steps\",\n        dryRun = false,\n        tags = \"\"\n)\npublic class CukesRunner {\n\n}\n\n\n\n\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/test/java/com/library/runner/CukesRunner.java b/src/test/java/com/library/runner/CukesRunner.java
+--- a/src/test/java/com/library/runner/CukesRunner.java	
++++ b/src/test/java/com/library/runner/CukesRunner.java	
+@@ -15,7 +15,7 @@
+         features = "src/test/resources/features" ,
+         glue = "com/library/steps",
+         dryRun = false,
+-        tags = ""
++        tags = "@wip"
+ )
+ public class CukesRunner {
+ 
+Index: src/test/resources/library.sql
+===================================================================
+diff --git a/src/test/resources/library.sql b/src/test/resources/library.sql
+new file mode 100644
+--- /dev/null	
++++ b/src/test/resources/library.sql	
+@@ -0,0 +1,3 @@
++select count(id) from users;
++
++select count(distinct id) from users;
+\ No newline at end of file
+Index: src/test/java/com/library/steps/UserInfoStepDefs.java
+===================================================================
+diff --git a/src/test/java/com/library/steps/UserInfoStepDefs.java b/src/test/java/com/library/steps/UserInfoStepDefs.java
+new file mode 100644
+--- /dev/null	
++++ b/src/test/java/com/library/steps/UserInfoStepDefs.java	
+@@ -0,0 +1,41 @@
++package com.library.steps;
++
++import com.library.utility.DB_Util;
++import io.cucumber.java.en.Given;
++import io.cucumber.java.en.Then;
++import io.cucumber.java.en.When;
++import org.junit.Assert;
++
++public class UserInfoStepDefs {
++
++    String actualUserResult;
++    @Given("Establish the database connection")
++    public void establish_the_database_connection() {
++        //DB_Util.createConnection(); Using from Custom Hooks
++
++
++    }
++    @When("Execute query to get all IDs from users")
++    public void execute_query_to_get_all_i_ds_from_users() {
++        String query = "select count(id) from users"; //1855
++        DB_Util.runQuery(query);
++
++        actualUserResult = DB_Util.getFirstRowFirstColumn();
++        System.out.println("actualResult = " + actualUserResult);
++
++
++
++    }
++    @Then("verify all users has unique ID")
++    public void verify_all_users_has_unique_id() {
++        String query = "select count(id) from users";
++        DB_Util.runQuery(query);
++        String expectedUserResult = DB_Util.getFirstRowFirstColumn();
++        System.out.println("expectedUserResult = " + expectedUserResult);
++
++        Assert.assertEquals(expectedUserResult, actualUserResult);
++
++        //DB_Util.destroy(); Using from Custom Hooks
++
++    }
++}
+Index: pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\n    <modelVersion>4.0.0</modelVersion>\n\n    <groupId>org.library</groupId>\n    <artifactId>LibraryAppDB_Assignments</artifactId>\n    <version>1.0-SNAPSHOT</version>\n\n    <properties>\n        <maven.compiler.source>11</maven.compiler.source>\n        <maven.compiler.target>11</maven.compiler.target>\n        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>\n    </properties>\n\n    <dependencies>\n        <!-- https://mvnrepository.com/artifact/org.seleniumhq.selenium/selenium-java -->\n        <dependency>\n            <groupId>org.seleniumhq.selenium</groupId>\n            <artifactId>selenium-java</artifactId>\n            <version>3.141.59</version>\n        </dependency>\n\n        <!-- https://mvnrepository.com/artifact/io.github.bonigarcia/webdrivermanager -->\n        <dependency>\n            <groupId>io.github.bonigarcia</groupId>\n            <artifactId>webdrivermanager</artifactId>\n            <version>5.1.0</version>\n        </dependency>\n\n        <!-- https://mvnrepository.com/artifact/com.github.javafaker/javafaker -->\n        <dependency>\n            <groupId>com.github.javafaker</groupId>\n            <artifactId>javafaker</artifactId>\n            <version>1.0.2</version>\n        </dependency>\n\n        <!-- https://mvnrepository.com/artifact/io.cucumber/cucumber-java -->\n        <dependency>\n            <groupId>io.cucumber</groupId>\n            <artifactId>cucumber-java</artifactId>\n            <version>7.2.3</version>\n        </dependency>\n\n\n        <!-- https://mvnrepository.com/artifact/io.cucumber/cucumber-junit -->\n        <dependency>\n            <groupId>io.cucumber</groupId>\n            <artifactId>cucumber-junit</artifactId>\n            <version>7.2.3</version>\n            <scope>test</scope>\n        </dependency>\n\n        <dependency>\n            <groupId>me.jvt.cucumber</groupId>\n            <artifactId>reporting-plugin</artifactId>\n            <version>7.2.0</version>\n        </dependency>\n\n    </dependencies>\n\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/pom.xml b/pom.xml
+--- a/pom.xml	
++++ b/pom.xml	
+@@ -58,6 +58,11 @@
+             <version>7.2.0</version>
+         </dependency>
+ 
++        <dependency>
++            <groupId>mysql</groupId>
++            <artifactId>mysql-connector-java</artifactId>
++            <version>8.0.32</version>
++        </dependency>
+     </dependencies>
+ 
+ </project>
+\ No newline at end of file
